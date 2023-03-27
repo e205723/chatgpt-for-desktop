@@ -1,40 +1,39 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/tauri";
-import "./App.css";
-import Database from "tauri-plugin-sql-api";
+import { useState } from 'react';
+import Database from 'tauri-plugin-sql-api';
+import './App.css';
+import reactLogo from './assets/react.svg';
 
 function App() {
-    const [greetMsg, setGreetMsg] = useState("");
-    const [name, setName] = useState("");
-    const db: Promise<Database> = setupDatabase();
+  const [greetMsg, setGreetMsg] = useState('');
+  const [name, setName] = useState('');
 
-    async function setupDatabase() {
-        const database = await Database.load("sqlite:sqlite.db");
-        await database.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)");
-        return database;
+  async function setupDatabase() {
+    const database = await Database.load('sqlite:sqlite.db');
+    await database.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)');
+    return database;
+  }
+
+  const db: Promise<Database> = setupDatabase();
+
+  async function greetSavedName() {
+    // Query the saved name
+    const rows: Array<{name: string}> = await (await db).select('SELECT name FROM users ORDER BY id DESC LIMIT 1');
+    if (!rows || rows.length === 0) {
+      return;
     }
+    const savedName = rows[0].name;
+    setGreetMsg(`Hello, ${savedName}!`);
+  }
 
-    async function greetSavedName() {
-        // Query the saved name
-        const rows: Array<{name: string}> = await (await db).select("SELECT name FROM users ORDER BY id DESC LIMIT 1");
-        if (!rows || rows.length === 0) {
-            console.error("No rows found in the database.");
-            return;
-        }
-        const savedName = rows[0].name;
-        setGreetMsg(`Hello, ${savedName}!`);
-    }
+  async function saveName() {
+    // Save the name
+    (await db).execute('INSERT INTO users (name) VALUES (?)', [name]);
 
-    async function saveName() {
-        // Save the name
-        (await db).execute("INSERT INTO users (name) VALUES (?)", [name]);
+    // Update the greet message
+    setGreetMsg(`Hello, ${name}!`);
+  }
 
-        // Update the greet message
-        setGreetMsg(`Hello, ${name}!`);
-    }
-
-    return (
+  return (
         <div className="container">
             <h1>Welcome to Tauri!</h1>
 
@@ -55,8 +54,8 @@ function App() {
             <div className="row">
                 <form
                     onSubmit={(e) => {
-                        e.preventDefault();
-                        saveName();
+                      e.preventDefault();
+                      saveName();
                     }}
                 >
                     <input
@@ -70,7 +69,7 @@ function App() {
             </div>
             <p>{greetMsg}</p>
         </div>
-    );
+  );
 }
 
 export default App;
